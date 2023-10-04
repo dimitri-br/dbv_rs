@@ -43,6 +43,7 @@ impl VirtualMachine{
         // output the result of the data stored in reg 3
         println!("Data:");
         println!("{:?}", self.memory.get_memory(0x2000));
+        println!("{:?}", self.memory.get_memory(0x2100));
     }
 
     pub fn load_program<T>(&mut self, file_path: &T) -> Result<(), &'static str> where T: AsRef<Path> + ?Sized{
@@ -150,9 +151,71 @@ impl VirtualMachine{
                     },
                 }
             }
-            Instructions::MOV => {}
+            Instructions::MOV => {
+                // MOV is register to register only
+                let destination_register = args[0].get_value(&self.registers, &self.memory);
+                let source_register = args[1].get_value(&self.registers, &self.memory);
 
-            Instructions::ADD => {}
+                let source_value = self.registers.get_register(source_register as usize);
+                
+                self.registers.set_register(destination_register as usize, source_value);
+            }
+
+            Instructions::ADD => {
+                match mode{
+                    InstructionMode::Register => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+
+                        // Get the value from the register
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_register = args[2].get_value(&self.registers, &self.memory);
+                        let b_value = self.registers.get_register(b_register as usize);
+
+                        self.registers.set_register(destination_register as usize, a_value + b_value);
+                    },
+                    InstructionMode::Immediate => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+                        
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_value = args[2].get_value(&self.registers, &self.memory);
+
+                        self.registers.set_register(destination_register as usize, a_value + b_value);
+                    },
+                    InstructionMode::RegisterIndirect => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+                        
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_register = args[2].get_value(&self.registers, &self.memory);
+                        let b_address = self.registers.get_register(b_register as usize);
+
+                        let b_value = self.memory.get_memory(b_address as usize);
+
+                        self.registers.set_register(destination_register as usize, a_value + b_value);
+                    },
+                    InstructionMode::BaseOffset => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_register = args[2].get_value(&self.registers, &self.memory);
+                        let b_address = self.registers.get_register(b_register as usize);
+
+                        let offset = args[3].get_value(&self.registers, &self.memory);
+
+                        let b_address = b_address + offset;
+                        let b_value = self.memory.get_memory(b_address as usize);
+
+                        self.registers.set_register(destination_register as usize, a_value + b_value);
+                    }
+                }
+            }
             Instructions::SUB => {
                 match mode{
                     InstructionMode::Register => {
@@ -265,10 +328,66 @@ impl VirtualMachine{
             }
             Instructions::DIV => {}
 
-            Instructions::AND => {}
+            Instructions::AND => {
+                match mode{
+                    InstructionMode::Register => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+
+                        // Get the value from the register
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_register = args[2].get_value(&self.registers, &self.memory);
+                        let b_value = self.registers.get_register(b_register as usize);
+
+                        self.registers.set_register(destination_register as usize, a_value & b_value);
+                    },
+                    InstructionMode::Immediate => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+                        
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_value = args[2].get_value(&self.registers, &self.memory);
+
+                        self.registers.set_register(destination_register as usize, a_value & b_value);
+                    },
+                    InstructionMode::RegisterIndirect => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+                        
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_register = args[2].get_value(&self.registers, &self.memory);
+                        let b_address = self.registers.get_register(b_register as usize);
+
+                        let b_value = self.memory.get_memory(b_address as usize);
+
+                        self.registers.set_register(destination_register as usize, a_value & b_value);
+                    },
+                    InstructionMode::BaseOffset => {
+                        let destination_register = args[0].get_value(&self.registers, &self.memory);
+
+                        let a_register = args[1].get_value(&self.registers, &self.memory);
+                        let a_value = self.registers.get_register(a_register as usize);
+
+                        let b_register = args[2].get_value(&self.registers, &self.memory);
+                        let b_address = self.registers.get_register(b_register as usize);
+
+                        let offset = args[3].get_value(&self.registers, &self.memory);
+
+                        let b_address = b_address + offset;
+                        let b_value = self.memory.get_memory(b_address as usize);
+
+                        self.registers.set_register(destination_register as usize, a_value & b_value);
+                    },
+                }
+            }
             Instructions::OR => {}
             Instructions::XOR => {}
             Instructions::NOT => {}
+
+            Instructions::MOD => {}
 
             Instructions::SL => {}
             Instructions::SR => {}
@@ -284,7 +403,7 @@ impl VirtualMachine{
                         let destination_register = args[1].get_value(&self.registers, &self.memory);
                         let destination_value = self.registers.get_register(destination_register as usize);
 
-                        self.memory.set_memory(destination_value as usize, source_value);
+                        self.memory.set_memory(source_value as usize, destination_value);
                     },
                     InstructionMode::Immediate => {
                         let source_register = args[0].get_value(&self.registers, &self.memory);
@@ -293,7 +412,7 @@ impl VirtualMachine{
                         // The value just is the value
                         let destination_value = args[1].get_value(&self.registers, &self.memory);
 
-                        self.memory.set_memory(destination_value as usize, source_value);
+                        self.memory.set_memory(source_value as usize, destination_value);
                     }, 
                     InstructionMode::RegisterIndirect => {
                         let source_register = args[0].get_value(&self.registers, &self.memory);
@@ -303,7 +422,7 @@ impl VirtualMachine{
                         let destination_address = self.registers.get_register(destination_register as usize);
                         let destination_value = self.memory.get_memory(destination_address as usize);
 
-                        self.memory.set_memory(destination_value as usize, source_value);
+                        self.memory.set_memory(source_value as usize, destination_value);
                     },
                     InstructionMode::BaseOffset => {
                         let source_register = args[0].get_value(&self.registers, &self.memory);
@@ -318,7 +437,7 @@ impl VirtualMachine{
 
                         let destination_value = self.memory.get_memory(destination_address as usize);
 
-                        self.memory.set_memory(destination_value as usize, source_value);
+                        self.memory.set_memory(source_value as usize, destination_value);
                     }                    
                 }
             }
@@ -351,15 +470,28 @@ impl VirtualMachine{
                     self.registers.set_cmp_flag(0x0005);
                 }
             }
-            Instructions::IF => {}
-            Instructions::IFN => {
+            Instructions::IF => {
                 if self.registers.get_cmp_flag() == 0x0000{
                     let address = args[2].get_value(&self.registers, &self.memory);
 
                     // Something to note: we need to divide this number by 4, 
                     // as the program is stored as u8, but we've compacted each instruction into a u32
 
-                    let address = (address / 4);
+                    let address = address / 4;
+
+                    self.registers.set_pc(address as usize);
+
+                    self.has_jumped = true;
+                }
+            }
+            Instructions::IFN => {
+                if self.registers.get_cmp_flag() == 0x0001{
+                    let address = args[2].get_value(&self.registers, &self.memory);
+
+                    // Something to note: we need to divide this number by 4, 
+                    // as the program is stored as u8, but we've compacted each instruction into a u32
+
+                    let address = address / 4;
 
                     self.registers.set_pc(address as usize);
 
@@ -368,7 +500,19 @@ impl VirtualMachine{
             }
             Instructions::IFG => {}
             Instructions::IFL => {}
-            Instructions::IFE => {}
+            Instructions::IFE => {
+                if self.registers.get_cmp_flag() == 0x0004{
+                    let address = args[2].get_value(&self.registers, &self.memory);
+
+                    // Something to note: we need to divide this number by 4,
+                    // as the program is stored as u8, but we've compacted each instruction into a u32
+                    let address = address / 4;
+
+                    self.registers.set_pc(address as usize);
+
+                    self.has_jumped = true;
+                }
+            }
             Instructions::IFNE => {}
 
             Instructions::JMP => {
@@ -376,7 +520,7 @@ impl VirtualMachine{
 
                 // Something to note: we need to divide this number by 4,
                 // as the program is stored as u8, but we've compacted each instruction into a u32
-                let address = (address / 4);
+                let address = address / 4;
 
                 self.registers.set_pc(address as usize);
 

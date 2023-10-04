@@ -40,6 +40,8 @@ enum_conv_gen! {
         SL,       // Performs an SHIFT LEFT operation
         SR,       // Performs an SHIFT RIGHT operation
 
+        MOD,      // Performs an MOD operation (modulo)
+
         SD,      // Store data into a memory location (32-bit)
         LD,      // Loads data from a memory location (32-bit)
         
